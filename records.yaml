@@ -1,0 +1,3 @@
+- domain: domain
+  type: a
+  hostname: sub.domain.com
