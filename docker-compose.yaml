@@ -1,0 +1,13 @@
+version: '3'
+services:
+  ddns:
+    container_name: ddns
+    hostname: ddns
+    image: jimeagle/digital-ocean-ddns:latest
+    restart: "unless-stopped"
+    environment:
+      - KEY=${DO_DDNS_KEY}
+      - ONE_TIME=false
+      - ON_LOAD=true
+    volumes:
+      - ./records.yaml:/root/records.yaml:ro
