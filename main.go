@@ -2,12 +2,12 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"github.com/digitalocean/godo"
 	"github.com/robfig/cron"
 	"golang.org/x/oauth2"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"os"
 	"strconv"
@@ -17,7 +17,8 @@ import (
 
 var (
 	ipDomains    = []string{"http://ipinfo.io/ip", "http://myexternalip.com/raw", "https://ifconfig.co/ip"}
-	localRecords []record
+	localRecords = map[string][]string{}
+	logger       = log.New(os.Stdout, "DDNS: ", log.LstdFlags)
 
 	// Digital Ocean
 	ctx    = context.TODO()
@@ -29,7 +30,7 @@ func init() {
 	// Get Digital Ocean key
 	var key = os.Getenv("KEY")
 	if key == "" {
-		fmt.Println("Missing Digital Ocean key")
+		logger.Println("Missing Digital Ocean key")
 		os.Exit(1)
 	}
 
@@ -40,26 +41,19 @@ func init() {
 	// Get local records
 	b, err := ioutil.ReadFile("records.yaml")
 	if err != nil {
-		fmt.Println(err)
+		logger.Println(err)
 		os.Exit(1)
 	}
 
 	err = yaml.Unmarshal(b, &localRecords)
 	if err != nil {
-		fmt.Println(err)
+		logger.Println(err)
 		os.Exit(1)
 	}
 
 	if len(localRecords) == 0 {
-		fmt.Println("No records to update")
+		logger.Println("No records to update")
 		os.Exit(1)
-	}
-
-	for _, record := range localRecords {
-		if record.Domain == "" {
-			fmt.Println("Domain in YAML is required")
-			os.Exit(1)
-		}
 	}
 }
 
@@ -74,10 +68,11 @@ func main() {
 
 	// Update every 30 mins
 	if !oneTime {
+
 		c := cron.New()
-		err := c.AddFunc("0 30 * * * *", updateIP)
+		err := c.AddFunc("@every 30m", updateIP)
 		if err != nil {
-			fmt.Println(err)
+			logger.Println(err)
 		}
 		c.Start()
 
@@ -91,16 +86,16 @@ func updateIP() {
 
 	// Get current IP
 	var ip string
+	var err error
+
 	for _, v := range ipDomains {
 
 		resp, err := http.Get(v)
 		if err != nil {
-			fmt.Println(err)
 			continue
 		}
 		bytes, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
-			fmt.Println(err)
 			continue
 		}
 
@@ -109,46 +104,47 @@ func updateIP() {
 	}
 
 	if ip == "" {
-		fmt.Println("Could not fetch IP")
+		var errString string
+		if err != nil {
+			errString = err.Error()
+		}
+		logger.Println("Could not fetch IP: " + errString)
 		return
 	}
 
-	fmt.Println("IP is " + ip)
+	logger.Println("IP is " + ip)
 
 	// Get domains
-	domains, _, err := client.Domains.List(ctx, &godo.ListOptions{Page: 1, PerPage: 1000})
+	liveDomains, _, err := client.Domains.List(ctx, &godo.ListOptions{Page: 1, PerPage: 1000})
 	if err != nil {
-		fmt.Println(err)
+		logger.Println(err)
 		os.Exit(1)
 	}
 
-	for _, localRecord := range localRecords {
-		for _, domain := range domains {
-			if domain.Name == localRecord.Domain {
+	for localDomain, localSubs := range localRecords {
+		for _, liveDomain := range liveDomains {
+			if localDomain == liveDomain.Name {
 
-				// Get domain records
-				records, _, err := client.Domains.Records(ctx, domain.Name, &godo.ListOptions{Page: 1, PerPage: 1000})
+				// Get live records
+				records, _, err := client.Domains.Records(ctx, liveDomain.Name, &godo.ListOptions{Page: 1, PerPage: 1000})
 				if err != nil {
-					fmt.Println("Failed to get records for " + domain.Name + ": " + err.Error())
+					logger.Println("Failed to get records for " + liveDomain.Name + ": " + err.Error())
 				}
 
-				for _, liveRecord := range records {
-					if liveRecord.Name == localRecord.SubDomain && liveRecord.Type == "A" {
+				for _, localSub := range localSubs {
+					for _, liveSub := range records {
+						if localSub == liveSub.Name && liveSub.Type == "A" {
 
-						_, _, err := client.Domains.EditRecord(ctx, domain.Name, liveRecord.ID, &godo.DomainRecordEditRequest{Data: ip})
-						if err != nil {
-							fmt.Println("Failed to update record: " + err.Error())
+							_, _, err := client.Domains.EditRecord(ctx, liveDomain.Name, liveSub.ID, &godo.DomainRecordEditRequest{Data: ip})
+							if err != nil {
+								logger.Println("Failed to update record: " + err.Error())
+							}
 						}
 					}
 				}
 			}
 		}
 	}
-}
-
-type record struct {
-	Domain    string `yaml:"domain"`
-	SubDomain string `yaml:"subdomain"`
 }
 
 type TokenSource struct {

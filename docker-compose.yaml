@@ -6,7 +6,7 @@ services:
     image: jimeagle/digital-ocean-ddns:latest
     restart: "unless-stopped"
     environment:
-      - KEY=${DO_DDNS_KEY}
+      - KEY=xxx
       - ONE_TIME=false
       - ON_LOAD=true
     volumes:
