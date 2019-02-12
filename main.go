@@ -2,10 +2,6 @@ package main
 
 import (
 	"context"
-	"github.com/digitalocean/godo"
-	"github.com/robfig/cron"
-	"golang.org/x/oauth2"
-	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -13,6 +9,11 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+
+	"github.com/digitalocean/godo"
+	"github.com/robfig/cron"
+	"golang.org/x/oauth2"
+	"gopkg.in/yaml.v2"
 )
 
 var (
