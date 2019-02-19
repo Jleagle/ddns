@@ -1,4 +1,4 @@
-module digital-ocean-ddns
+module github.com/Jleagle/digital-ocean-ddns
 
 require (
 	github.com/digitalocean/godo v1.7.3
