@@ -35,7 +35,7 @@ func init() {
 		os.Exit(1)
 	}
 
-	// Make Didital Ocean client
+	// Make Digital Ocean client
 	oauthClient := oauth2.NewClient(context.Background(), &TokenSource{AccessToken: key})
 	client = godo.NewClient(oauthClient)
 
