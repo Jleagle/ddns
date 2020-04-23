@@ -7,7 +7,7 @@ RUN CGO_ENABLED=0 GOOS=linux go build -a
 # Runtime image
 FROM alpine:3.11 AS runtime-env
 WORKDIR /root/
-COPY --from=build-env /root/digital-ocean-ddns ./
+COPY --from=build-env /root/ddns-digital-ocean ./
 COPY records.yaml ./records.yaml
 RUN apk update && apk add ca-certificates curl bash
-CMD ["./digital-ocean-ddns"]
+CMD ["./ddns-digital-ocean"]

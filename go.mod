@@ -1,4 +1,4 @@
-module github.com/Jleagle/digital-ocean-ddns
+module github.com/Jleagle/ddns-digital-ocean
 
 go 1.14
 
