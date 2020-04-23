@@ -88,10 +88,11 @@ func updateIP() {
 	// Get current IP
 	var ip string
 	var err error
+	var resp *http.Response
 
 	for _, v := range ipDomains {
 
-		resp, err := http.Get(v)
+		resp, err = http.Get(v)
 		if err != nil {
 			continue
 		}
