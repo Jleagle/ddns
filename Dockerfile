@@ -1,11 +1,11 @@
 # Build image
-FROM golang:1.11.5 AS build-env
+FROM golang:1.14 AS build-env
 WORKDIR /root/
 COPY . ./
 RUN CGO_ENABLED=0 GOOS=linux go build -a
 
 # Runtime image
-FROM alpine:3.9 AS runtime-env
+FROM alpine:3.11 AS runtime-env
 WORKDIR /root/
 COPY --from=build-env /root/digital-ocean-ddns ./
 COPY records.yaml ./records.yaml
