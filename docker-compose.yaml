@@ -3,7 +3,7 @@ services:
   ddns:
     container_name: ddns
     hostname: ddns
-    image: jimeagle/digital-ocean-ddns:latest
+    image: jimeagle/ddns:latest
     restart: "unless-stopped"
     environment:
       - DO_KEY=xxx
