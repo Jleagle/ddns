@@ -1,3 +1,3 @@
-# ddns-digital-ocean
+# ddns
 
-Currently only works with IPv4
+Currently, only works with IPv4
