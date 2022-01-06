@@ -29,7 +29,7 @@ var (
 func init() {
 
 	// Get Digital Ocean key
-	var key = os.Getenv("KEY")
+	var key = os.Getenv("DO_KEY")
 	if key == "" {
 		logger.Println("Missing Digital Ocean key")
 		os.Exit(1)
