@@ -17,7 +17,7 @@ import (
 )
 
 var (
-	ipDomains    = []string{"http://ipinfo.io/ip", "http://myexternalip.com/raw", "https://ifconfig.co/ip"}
+	ipDomains    = []string{"https://ipinfo.io/ip", "https://myexternalip.com/raw", "https://ifconfig.co/ip"}
 	localRecords = map[string][]string{}
 	logger       = log.New(os.Stdout, "DDNS: ", log.LstdFlags)
 
