@@ -15,8 +15,6 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-// todo, remember last ip, dont update if same
-
 const (
 	providerCloudflare   = "cloudflare"
 	providerDigitalOcean = "digitalocean"
@@ -99,11 +97,14 @@ func main() {
 	}
 }
 
-var ipProviders = []string{
-	"https://ipinfo.io/ip",
-	"https://myexternalip.com/raw",
-	"https://ifconfig.co/ip",
-}
+var (
+	cachedIP    = ""
+	ipProviders = []string{
+		"https://ipinfo.io/ip",
+		"https://myexternalip.com/raw",
+		"https://ifconfig.co/ip",
+	}
+)
 
 func updateIP() {
 
@@ -138,6 +139,13 @@ func updateIP() {
 		logger.Println("Could not fetch IP: " + errString)
 		return
 	}
+
+	// Cache to stop unnecessary api calls
+	if ip == cachedIP {
+		return
+	}
+
+	cachedIP = ip
 
 	logger.Println("IP is " + ip)
 
