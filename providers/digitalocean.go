@@ -47,7 +47,9 @@ func (d DigitalOcean) GetRecordID(domainID, name string) (interface{}, error) {
 		return nil, err
 	}
 
-	records, _, err := api.Domains.RecordsByTypeAndName(context.Background(), domainID, "A", name, &godo.ListOptions{Page: 1, PerPage: 1})
+	page := &godo.ListOptions{Page: 1, PerPage: 1}
+
+	records, _, err := api.Domains.RecordsByTypeAndName(context.Background(), domainID, "A", name, page)
 	if len(records) == 1 {
 		return records[0].ID, nil
 	}

@@ -56,10 +56,7 @@ func (c Cloudflare) GetRecordID(domainID, name string) (interface{}, error) {
 		return "", err
 	}
 
-	filter := cloudflare.DNSRecord{
-		Name: name,
-		Type: "A",
-	}
+	filter := cloudflare.DNSRecord{Name: name, Type: "A"}
 
 	records, err := api.DNSRecords(context.Background(), domainID, filter)
 	if len(records) == 1 {
