@@ -9,4 +9,4 @@ FROM alpine:3.11 AS runtime-env
 WORKDIR /root/
 COPY --from=build-env /root/ddns ./
 RUN apk update && apk add ca-certificates curl bash
-CMD ["./ddns"]
+CMD ["./ddns", "-onload", "-cron"]

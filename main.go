@@ -1,77 +1,93 @@
 package main
 
 import (
-	"context"
+	"flag"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
-	"strconv"
 	"strings"
 	"sync"
 
-	"github.com/digitalocean/godo"
+	"github.com/Jleagle/ddns/providers"
+	"github.com/jpillora/go-tld"
 	"github.com/robfig/cron"
-	"golang.org/x/oauth2"
 	"gopkg.in/yaml.v2"
 )
 
-var (
-	ipDomains    = []string{"https://ipinfo.io/ip", "https://myexternalip.com/raw", "https://ifconfig.co/ip"}
-	localRecords = map[string][]string{}
-	logger       = log.New(os.Stdout, "DDNS: ", log.LstdFlags)
+// todo, remember last ip, dont update if same
 
-	// Digital Ocean
-	ctx    = context.TODO()
-	client *godo.Client
+const (
+	providerCloudflare   = "cloudflare"
+	providerDigitalOcean = "digitalocean"
 )
 
-func init() {
+var (
+	flagRecordsFile  = flag.String("file", "records.yaml", "The file with records to update")
+	flagDryRunMode   = flag.Bool("dry", false, "Dry run mode")
+	flagOnLoad       = flag.Bool("onload", false, "Run when the program starts")
+	flagCron         = flag.Bool("cron", false, "Run forever on a cron")
+	flagCronDuration = flag.String("duration", "30m", "Cron intervals")
 
-	// Get Digital Ocean key
-	var key = os.Getenv("DO_KEY")
-	if key == "" {
-		logger.Println("Missing Digital Ocean key")
-		os.Exit(1)
-	}
+	logger       = log.New(os.Stdout, "DDNS: ", log.LstdFlags)
+	recordsCache = map[providerEnum][]string{}
+)
 
-	// Make Digital Ocean client
-	oauthClient := oauth2.NewClient(context.Background(), &TokenSource{AccessToken: key})
-	client = godo.NewClient(oauthClient)
+type provider interface {
+	GetDomainID(domain string) (domainID string, err error)
+	GetRecordID(domainID, name string) (recordID interface{}, err error)
+	EditRecord(domainID string, recordID interface{}, ip string) (err error)
+}
 
-	// Get local records
-	b, err := ioutil.ReadFile("records.yaml")
-	if err != nil {
-		logger.Println(err)
-		os.Exit(1)
-	}
+type providerEnum string
 
-	err = yaml.Unmarshal(b, &localRecords)
-	if err != nil {
-		logger.Println(err)
-		os.Exit(1)
-	}
-
-	if len(localRecords) == 0 {
-		logger.Println("No records to update")
-		os.Exit(1)
+func (p providerEnum) getProvider() provider {
+	switch p {
+	case providerDigitalOcean:
+		return providers.DigitalOcean{}
+	case providerCloudflare:
+		return providers.Cloudflare{}
+	default:
+		return nil
 	}
 }
 
 func main() {
 
-	oneTime, _ := strconv.ParseBool(os.Getenv("ONE_TIME"))
-	onLoad, _ := strconv.ParseBool(os.Getenv("ON_LOAD"))
+	flag.Parse()
 
-	if oneTime || onLoad {
+	// Read domains from config
+	b, err := ioutil.ReadFile(*flagRecordsFile)
+	if err != nil {
+		logger.Println(err)
+		os.Exit(1)
+	}
+
+	err = yaml.Unmarshal(b, &recordsCache)
+	if err != nil {
+		logger.Println(err)
+		os.Exit(1)
+	}
+
+	if len(recordsCache) == 0 {
+		logger.Println("No records to update")
+		os.Exit(1)
+	}
+
+	if !*flagOnLoad && !*flagCron {
+		logger.Println("DDNS needs to run on load or on cron")
+		os.Exit(1)
+	}
+
+	//
+	if *flagOnLoad {
 		updateIP()
 	}
 
-	// Update every 30 mins
-	if !oneTime {
+	if *flagCron {
 
 		c := cron.New()
-		err := c.AddFunc("@every 30m", updateIP)
+		err := c.AddFunc("@every "+*flagCronDuration, updateIP)
 		if err != nil {
 			logger.Println(err)
 		}
@@ -83,20 +99,29 @@ func main() {
 	}
 }
 
+var ipProviders = []string{
+	"https://ipinfo.io/ip",
+	"https://myexternalip.com/raw",
+	"https://ifconfig.co/ip",
+}
+
 func updateIP() {
 
 	// Get current IP
 	var ip string
 	var err error
-	var resp *http.Response
 
-	for _, v := range ipDomains {
+	for _, v := range ipProviders {
+
+		var resp *http.Response
+		var bytes []byte
 
 		resp, err = http.Get(v)
 		if err != nil {
 			continue
 		}
-		bytes, err := ioutil.ReadAll(resp.Body)
+
+		bytes, err = ioutil.ReadAll(resp.Body)
 		if err != nil {
 			continue
 		}
@@ -117,45 +142,38 @@ func updateIP() {
 	logger.Println("IP is " + ip)
 
 	// Get domains
-	liveDomains, _, err := client.Domains.List(ctx, &godo.ListOptions{Page: 1, PerPage: 1000})
-	if err != nil {
-		logger.Println(err)
-		os.Exit(1)
-	}
+	for providerEnum, domains := range recordsCache {
 
-	for localDomain, localSubs := range localRecords {
-		for _, liveDomain := range liveDomains {
-			if localDomain == liveDomain.Name {
+		provider := providerEnum.getProvider()
 
-				// Get live records
-				records, _, err := client.Domains.Records(ctx, liveDomain.Name, &godo.ListOptions{Page: 1, PerPage: 1000})
+		for _, domain := range domains {
+
+			parsed, err := tld.Parse("https://" + domain)
+			if err != nil {
+				logger.Println(err)
+				continue
+			}
+
+			domainID, err := provider.GetDomainID(parsed.Domain + "." + parsed.TLD)
+			if err != nil {
+				logger.Println(err)
+				continue
+			}
+
+			recordID, err := provider.GetRecordID(domainID, domain)
+			if err != nil {
+				logger.Println(err)
+				continue
+			}
+
+			logger.Printf("Updating %s", domain)
+
+			if !*flagDryRunMode {
+				err := provider.EditRecord(domainID, recordID, ip)
 				if err != nil {
-					logger.Println("Failed to get records for " + liveDomain.Name + ": " + err.Error())
-				}
-
-				for _, localSub := range localSubs {
-					for _, liveSub := range records {
-						if localSub == liveSub.Name && liveSub.Type == "A" {
-
-							_, _, err := client.Domains.EditRecord(ctx, liveDomain.Name, liveSub.ID, &godo.DomainRecordEditRequest{Data: ip})
-							if err != nil {
-								logger.Println("Failed to update record: " + err.Error())
-							}
-						}
-					}
+					logger.Println("Failed to update record: " + err.Error())
 				}
 			}
 		}
 	}
-}
-
-type TokenSource struct {
-	AccessToken string
-}
-
-func (t *TokenSource) Token() (*oauth2.Token, error) {
-	token := &oauth2.Token{
-		AccessToken: t.AccessToken,
-	}
-	return token, nil
 }

@@ -1,7 +1,7 @@
 ---
-domain1:
-  - sub1
-  - sub2
-domain2:
-  - sub3
-  - sub4
+cloudflare:
+  - sub1.domain.com
+  - sub2.domain.com
+digitalocean:
+  - sub1.domain.com
+  - sub2.domain.com
