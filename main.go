@@ -174,7 +174,7 @@ func updateIP() {
 				continue
 			}
 
-			logger.Printf("Updating %s", domain)
+			logger.Printf("Updating %s on %s", domain, providerEnum)
 
 			if !*flagDryRunMode {
 				err := provider.EditRecord(domainID, recordID, ip)
