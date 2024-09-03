@@ -2,7 +2,7 @@ package main
 
 import (
 	"flag"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -55,7 +55,7 @@ func main() {
 	flag.Parse()
 
 	// Read domains from config
-	b, err := ioutil.ReadFile(*flagRecordsFile)
+	b, err := os.ReadFile(*flagRecordsFile)
 	if err != nil {
 		logger.Println(err)
 		os.Exit(1)
@@ -122,7 +122,7 @@ func updateIP() {
 			continue
 		}
 
-		bytes, err = ioutil.ReadAll(resp.Body)
+		bytes, err = io.ReadAll(resp.Body)
 		if err != nil {
 			continue
 		}
