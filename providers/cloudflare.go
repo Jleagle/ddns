@@ -56,9 +56,12 @@ func (c Cloudflare) GetRecordID(domainID, name string) (interface{}, error) {
 		return "", err
 	}
 
-	filter := cloudflare.DNSRecord{Name: name, Type: "A"}
+	records, _, err := api.ListDNSRecords(
+		context.Background(),
+		cloudflare.ZoneIdentifier(domainID),
+		cloudflare.ListDNSRecordsParams{Type: "A", Name: name},
+	)
 
-	records, err := api.DNSRecords(context.Background(), domainID, filter)
 	if len(records) == 1 {
 		return records[0].ID, nil
 	}
@@ -73,5 +76,11 @@ func (c Cloudflare) EditRecord(domainID string, recordID interface{}, ip string)
 		return err
 	}
 
-	return api.UpdateDNSRecord(context.Background(), domainID, recordID.(string), cloudflare.DNSRecord{Content: ip})
+	_, err = api.UpdateDNSRecord(
+		context.Background(),
+		cloudflare.ZoneIdentifier(domainID),
+		cloudflare.UpdateDNSRecordParams{Content: ip, ID: recordID.(string)},
+	)
+
+	return err
 }
