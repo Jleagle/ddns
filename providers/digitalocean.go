@@ -23,7 +23,7 @@ func getDigitalOceanClient() (*godo.Client, error) {
 
 		var key = os.Getenv("DO_KEY")
 		if key == "" {
-			return nil, errors.New("Missing Digital Ocean key")
+			return nil, errors.New("missing digitalocean key")
 		}
 
 		oauthClient := oauth2.NewClient(context.Background(), &TokenSource{AccessToken: key})

@@ -22,7 +22,7 @@ func getCloudflareClient() (*cloudflare.API, error) {
 
 		var key = os.Getenv("CF_KEY")
 		if key == "" {
-			return nil, errors.New("Missing GloudFlare key")
+			return nil, errors.New("missing cloudflare key")
 		}
 
 		api, err := cloudflare.NewWithAPIToken(key)
