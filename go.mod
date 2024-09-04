@@ -8,7 +8,7 @@ require (
 	github.com/jpillora/go-tld v1.2.1
 	github.com/robfig/cron v1.2.0
 	golang.org/x/net v0.28.0
-	golang.org/x/oauth2 v0.22.0
+	golang.org/x/oauth2 v0.23.0
 	gopkg.in/yaml.v2 v2.4.0
 )
 
