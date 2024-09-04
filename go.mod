@@ -4,7 +4,7 @@ go 1.18
 
 require (
 	github.com/cloudflare/cloudflare-go v0.103.0
-	github.com/digitalocean/godo v1.121.0
+	github.com/digitalocean/godo v1.122.0
 	github.com/jpillora/go-tld v1.2.1
 	github.com/robfig/cron v1.2.0
 	golang.org/x/net v0.28.0
