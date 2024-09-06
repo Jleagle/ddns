@@ -2,8 +2,8 @@ github.com/cloudflare/cloudflare-go v0.103.0 h1:XXKzgXeUbAo7UTtM4T5wuD2bJPBtNZv7
 github.com/cloudflare/cloudflare-go v0.103.0/go.mod h1:0DrjT4g8wgYFYIxhlqR8xi8dNWfyHFGilUkU3+XV8h0=
 github.com/creack/pty v1.1.9/go.mod h1:oKZEueFk5CKHvIhNR5MUki03XCEU+Q6VDXinZuGJ33E=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
-github.com/digitalocean/godo v1.121.0 h1:ilXiHuEnhbJs2fmFEPX0r/QQ6KfiOIMAhJN3f8NiCfI=
-github.com/digitalocean/godo v1.121.0/go.mod h1:WQVH83OHUy6gC4gXpEVQKtxTd4L5oCp+5OialidkPLY=
+github.com/digitalocean/godo v1.123.0 h1:EowFmnVevXIKn9svPDTz0NK4+f+eE3v5easKD9hjc1k=
+github.com/digitalocean/godo v1.123.0/go.mod h1:WQVH83OHUy6gC4gXpEVQKtxTd4L5oCp+5OialidkPLY=
 github.com/fatih/color v1.16.0 h1:zmkK9Ngbjj+K0yRhTVONQh1p/HknKYSlNT+vZCzyokM=
 github.com/goccy/go-json v0.10.3 h1:KZ5WoDbxAIgm2HNbYckL0se1fHD6rz5j4ywS6ebzDqA=
 github.com/goccy/go-json v0.10.3/go.mod h1:oq7eo15ShAhp70Anwd5lgX2pLfOS3QCiwU/PULtXL6M=
